@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tan Agi Clashers</title>
+<style>
+*{box-sizing:border-box;user-select:none}
+body{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  font-family:'Segoe UI',Roboto,sans-serif;margin:0;padding:16px;
+  background:#0a0f14;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(255,120,40,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(80,40,20,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(60,30,15,0.4) 0%, transparent 50%),
+    linear-gradient(180deg, #2a1f18 0%, #1a120d 40%, #0d0906 100%);
+  position:relative;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px),
+    radial-gradient(circle at 30% 60%, rgba(120,70,30,0.15) 0px, transparent 3px),
+    radial-gradient(circle at 60% 40%, rgba(90,50,20,0.12) 0px, transparent 2px),
+    radial-gradient(circle at 80% 75%, rgba(140,80,35,0.1) 0px, transparent 4px);
+  background-size:auto, 80px 80px, 60px 60px, 100px 100px;
+}
+body::after{
+  content:'';position:fixed;bottom:0;left:0;right:0;height:40vh;pointer-events:none;z-index:0;
+  background:linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+}
+
+/* ===== WEAPON SELECTION MENU ===== */
+.weapon-menu{
+  position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:flex;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px);
+  animation:menuFade .35s ease;padding:16px;
+}
+@keyframes menuFade{0%{opacity:0}100%{opacity:1}}
+.weapon-menu.hidden{display:none}
+.menu-box{
+  background:linear-gradient(180deg,#2d3e44,#1a262c);
+  border-radius:44px;padding:28px 34px;max-width:860px;width:100%;
+  box-shadow:0 20px 60px #000,0 0 100px rgba(200,100,30,0.2);
+  border:3px solid #5b7a83;max-height:94vh;overflow-y:auto;
+}
+.menu-title{
+  text-align:center;color:#f0e6c5;font-size:1.8rem;font-weight:700;
+  letter-spacing:2px;margin:0 0 4px;
+  text-shadow:0 4px 0 #0b1417,0 0 30px rgba(255,150,50,0.4);
+}
+.menu-sub{text-align:center;color:#a8bfc8;font-size:.85rem;margin-bottom:18px;letter-spacing:.5px}
+.menu-section-label{
+  color:#d9b650;font-size:.8rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:2px;margin:0 0 8px;text-align:center;
+}
+.weapon-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;
+}
+.weapon-option{
+  background:linear-gradient(180deg,#3e555e,#2a3d45);border:2px solid #3f5963;
+  border-radius:18px;padding:10px 6px;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:4px;transition:all .15s;position:relative;
+  box-shadow:0 4px 0 #121e22,0 5px 10px #000;
+}
+.weapon-option:hover{filter:brightness(1.15);transform:translateY(-2px)}
+.weapon-option.selected{
+  border-color:#d9b650;background:linear-gradient(180deg,#4a656f,#2e444d);
+  box-shadow:0 0 18px rgba(217,182,80,0.6),0 4px 0 #121e22;
+}
+.weapon-option .w-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+.weapon-option .w-icon svg{width:100%;height:100%;filter:drop-shadow(0 0 5px currentColor)}
+.weapon-option .w-name{font-size:.78rem;font-weight:700;color:#f0e6c5;letter-spacing:1px}
+.weapon-option .w-stat{font-size:.58rem;color:#a8bfc8;text-align:center;line-height:1.2}
+.menu-row{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.menu-btn{
+  background:linear-gradient(180deg,#4a656f,#2e444d);border:2px solid #5b7a83;border-radius:30px;
+  padding:10px 22px;color:#f0e6c5;font-weight:700;font-size:.9rem;cursor:pointer;
+  box-shadow:0 4px 0 #121e22,0 5px 12px #000;transition:all .1s;letter-spacing:.5px;
+}
+.menu-btn:hover{filter:brightness(1.15)}
+.menu-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #121e22}
+.menu-btn.primary{
+  background:linear-gradient(180deg,#e8c860,#d9b650);color:#1e2b2f;border-color:#ffe484;
+  box-shadow:0 5px 0 #8a6d1e,0 6px 14px #000;
+}
+.menu-btn.primary:active{box-shadow:0 2px 0 #8a6d1e}
+.menu-btn.active-toggle{background:linear-gradient(180deg,#5a8ce0,#3e6bb3);color:#fff;border-color:#8ab8ff}
+.random-note{font-size:.75rem;color:#a8bfc8;text-align:center;margin-bottom:8px}
+
+/* ===== GAME ===== */
+.game-container{
+  background:linear-gradient(180deg,#2d3e44 0%,#1e2b2f 100%);
+  padding:26px 26px 34px;border-radius:52px 52px 40px 40px;
+  box-shadow:0 20px 60px rgba(0,0,0,.9),0 0 120px rgba(200,100,30,0.15),inset 0 0 0 2px #5b7a83,inset 0 0 20px #1f2e33;
+  max-width:1080px;width:fit-content;margin:0 auto;position:relative;z-index:1;
+}
+h1{
+  text-align:center;color:#f0e6c5;
+  text-shadow:0 4px 0 #0b1417,0 6px 12px #000,0 0 30px rgba(255,150,50,0.4);
+  font-weight:600;letter-spacing:3px;font-size:2.3rem;margin:-8px 0 8px;
+}
+h1 .tan{color:#d9b650}
+h1 .agi{color:#e05a5a}
+h1 .clash{color:#7ab8d9}
+.weapon-tag{text-align:center;font-size:.78rem;color:#a8bfc8;margin-bottom:12px;letter-spacing:1px}
+.weapon-tag b{color:#f0ddb0}
+.arena{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:10px;
+  border-radius:90px 90px 36px 36px;padding:18px 26px 24px;margin-bottom:16px;
+  position:relative;min-height:500px;overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(80,50,30,0.5) 0%, transparent 70%),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 41px),
+    linear-gradient(180deg, #1a2428 0%, #263238 50%, #1c282c 100%);
+  box-shadow:inset 0 0 60px #050a0c,0 10px 25px #050a0c,inset 0 -20px 40px rgba(60,35,15,0.4);
+  border:2px solid #3f5963;transition:box-shadow .2s;
+}
+.arena.clash-glow{box-shadow:inset 0 0 60px #050a0c,0 0 40px rgba(255,160,60,0.35),inset 0 -20px 40px rgba(60,35,15,0.4)}
+.arena::before{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:45%;
+  background:
+    radial-gradient(ellipse at 15% 100%, rgba(70,45,20,0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 100%, rgba(70,45,20,0.6) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(50,30,15,0.7) 0%, transparent 60%),
+    repeating-linear-gradient(85deg, transparent 0px, transparent 12px, rgba(40,25,10,0.3) 12px, rgba(40,25,10,0.3) 14px);
+  pointer-events:none;z-index:0;
+}
+.arena::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:50%;
+  background:linear-gradient(180deg, rgba(40,25,15,0.3) 0%, transparent 100%);
+  pointer-events:none;z-index:0;
+}
+.fighter{
+  display:flex;flex-direction:column;align-items:center;width:250px;
+  position:relative;z-index:2;
+}
+.fighter-label{
+  font-size:1rem;font-weight:700;color:#d7d0b0;text-transform:uppercase;letter-spacing:2px;
+  background:#1f2d33;padding:5px 16px;border-radius:40px;margin-bottom:6px;
+  box-shadow:inset 0 -3px 0 #0a1114,0 6px 10px #000,0 0 15px rgba(0,0,0,0.5);
+}
+.hp-bar-wrap{
+  width:100%;height:20px;background:#10181c;border-radius:40px;
+  box-shadow:inset 0 0 8px #000;overflow:hidden;margin-bottom:5px;
+  border:2px solid #3f5963;position:relative;
+}
+.hp-fill{
+  height:100%;width:100%;background:linear-gradient(90deg,#b33e3e,#e05a5a);
+  border-radius:40px;transition:width .4s cubic-bezier(.2,.9,.4,1);box-shadow:0 0 12px #ff6b6b;
+}
+.hp-fill.ai-fill{background:linear-gradient(90deg,#3e6bb3,#5a8ce0);box-shadow:0 0 12px #5a8ce0}
+.hp-text{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:.8rem;font-weight:700;color:#fff;text-shadow:0 1px 3px #000;z-index:2;
+}
+.skill-coins-panel{
+  width:100%;display:flex;justify-content:space-around;gap:3px;margin-bottom:6px;
+}
+.skill-coin-pool{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:#10181c;border-radius:10px;padding:3px 5px;flex:1;
+  border:1.5px solid #3f5963;box-shadow:inset 0 0 6px #000;
+  transition:border-color .2s,box-shadow .2s;
+}
+.skill-coin-pool.empty{border-color:#e05a5a;opacity:.5}
+.skill-coin-pool.active-pool{border-color:#d9b650;box-shadow:inset 0 0 6px #000,0 0 12px rgba(217,182,80,0.6)}
+.skill-coin-pool .pool-label{font-size:.55rem;font-weight:700;color:#8fa5ad;text-transform:uppercase}
+.skill-coin-pool .pool-coins{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:12px}
+.skill-coin-pool .pool-coin{width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ffe484,#e0b92e 60%,#a8791a);
+  border:1px solid #ffe484;box-shadow:0 0 4px rgba(255,220,100,.6);transition:all .2s}
+.skill-coin-pool .pool-coin.lost{background:#2a2a2a;border-color:#3a3a3a;box-shadow:none;opacity:.4}
+.stat-row{width:100%;display:flex;gap:5px;margin-bottom:5px;}
+.power-box{
+  flex:2;display:flex;align-items:center;justify-content:space-between;gap:6px;
+  background:#10181c;border-radius:14px;padding:5px 10px;
+  border:2px solid #3f5963;box-shadow:inset 0 0 10px #000;
+  transition:border-color .2s,box-shadow .2s;min-height:40px;
+}
+.power-box.active{border-color:#d9b650;box-shadow:inset 0 0 10px #000,0 0 14px rgba(217,182,80,.5)}
+.power-box-label{font-size:.6rem;font-weight:700;color:#8fa5ad;text-transform:uppercase}
+.power-box-value{font-size:1.3rem;font-weight:900;color:#f0ddb0;text-shadow:0 2px 0 #0b1417;min-width:40px;text-align:right}
+.power-box-value.bump{animation:powerBump .25s ease}
+@keyframes powerBump{0%{transform:scale(1)}40%{transform:scale(1.35);color:#ffe484}100%{transform:scale(1)}}
+.sanity-box{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#10181c;border-radius:12px;padding:3px 5px;
+  border:2px solid #4a5f6a;box-shadow:inset 0 0 10px #000;
+  transition:border-color .2s,box-shadow .2s;min-height:40px;
+}
+.sanity-box.pos{border-color:#5a9e6a;box-shadow:inset 0 0 10px #000,0 0 10px rgba(90,180,100,0.4)}
+.sanity-box.neg{border-color:#a85050;box-shadow:inset 0 0 10px #000,0 0 10px rgba(200,80,80,0.4)}
+.sanity-box.max{border-color:#ffe484;box-shadow:inset 0 0 10px #000,0 0 14px rgba(255,220,100,0.7)}
+.sanity-box.min{border-color:#ff4444;box-shadow:inset 0 0 10px #000,0 0 14px rgba(255,60,60,0.7)}
+.sanity-label{font-size:.5rem;font-weight:700;color:#8fa5ad;text-transform:uppercase;letter-spacing:.5px}
+.sanity-value{font-size:.9rem;font-weight:900;color:#f0ddb0;text-shadow:0 2px 0 #0b1417;line-height:1}
+.sanity-chance{font-size:.5rem;font-weight:700;color:#a8c0c8;margin-top:1px}
+.sanity-value.bump{animation:sanityBump .3s ease}
+@keyframes sanityBump{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+.coin-row{display:flex;gap:5px;justify-content:center;align-items:center;min-height:36px;margin-bottom:4px;flex-wrap:wrap}
+.coin-slot{width:30px;height:30px;border-radius:50%;background:#1a2529;
+  border:2px dashed #3f5963;display:flex;align-items:center;justify-content:center;perspective:300px}
+.coin-slot.filled{border:2px solid #b38f1a}
+.coin{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:.75rem;transform-style:preserve-3d}
+.coin.heads{background:radial-gradient(circle at 35% 30%,#ffe484,#e0b92e 60%,#a8791a);color:#5c4200;
+  box-shadow:0 0 12px rgba(255,220,100,.7),inset 0 -3px 0 #8a6d1e;border:1.5px solid #ffe484}
+.coin.tails{background:radial-gradient(circle at 35% 30%,#c5c5c5,#8a8a8a 60%,#5a5a5a);color:#2a2a2a;
+  box-shadow:0 0 8px rgba(180,180,180,.4),inset 0 -3px 0 #4a4a4a;border:1.5px solid #b0b0b0}
+.coin.flipping{animation:coinFlip .45s linear infinite}
+@keyframes coinFlip{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+.coin.landed{animation:coinLand .3s cubic-bezier(.2,1.4,.4,1)}
+@keyframes coinLand{0%{transform:scale(1.4) rotateY(180deg)}100%{transform:scale(1) rotateY(0)}}
+
+/* === STICKMAN + WEAPON === */
+.stickman{
+  position:relative;height:190px;width:150px;display:flex;justify-content:center;align-items:flex-end;
+  z-index:5;
+}
+.stickman .body-svg{
+  width:100%;height:100%;filter:drop-shadow(4px 8px 6px rgba(0,0,0,.8));overflow:visible;
+  transform-origin:50% 100%;
+  animation:idleBreathe 3s ease-in-out infinite;
+}
+@keyframes idleBreathe{
+  0%,100%{transform:scaleY(1) translateY(0)}
+  50%{transform:scaleY(0.985) translateY(2px)}
+}
+/* AI mirrored to face player */
+.fighter.right .stickman .body-svg{transform:scaleX(-1);animation:idleBreatheR 3s ease-in-out infinite;}
+@keyframes idleBreatheR{
+  0%,100%{transform:scaleX(-1) scaleY(1) translateY(0)}
+  50%{transform:scaleX(-1) scaleY(0.985) translateY(2px)}
+}
+/* Weapon holder - proportionally sized and held in hand */
+.weapon-wrap{
+  position:absolute;bottom:26px;right:-16px;width:52px;height:150px;
+  transform-origin:bottom center;transform:rotate(-15deg) scaleX(-1);
+  transition:transform .12s cubic-bezier(.2,.9,.4,1.2);
+  pointer-events:none;z-index:6;
+  filter:drop-shadow(2px 4px 4px #000);
+  animation:idleSway 3s ease-in-out infinite;
+}
+.left .weapon-wrap{right:auto;left:-16px;transform:rotate(15deg);animation:idleSwayL 3s ease-in-out infinite;}
+@keyframes idleSway{
+  0%,100%{transform:rotate(-15deg) scaleX(-1) translateY(0)}
+  50%{transform:rotate(-13deg) scaleX(-1) translateY(1px)}
+}
+@keyframes idleSwayL{
+  0%,100%{transform:rotate(15deg) translateY(0)}
+  50%{transform:rotate(13deg) translateY(1px)}
+}
+.weapon-wrap svg{width:100%;height:100%;overflow:visible}
+
+/* CHARGE */
+@keyframes chargePlayer{0%{transform:translateX(0)}100%{transform:translateX(85px)}}
+@keyframes chargeAi{0%{transform:translateX(0)}100%{transform:translateX(-85px)}}
+.charge-player{animation:chargePlayer .42s cubic-bezier(.4,0,.6,1) forwards}
+.charge-ai{animation:chargeAi .42s cubic-bezier(.4,0,.6,1) forwards}
+
+/* SWING */
+@keyframes swingPlayer{
+  0%{transform:rotate(15deg) scaleX(-1)}
+  20%{transform:rotate(70deg) scaleX(-1)}
+  55%{transform:rotate(-85deg) scaleX(-1)}
+  75%{transform:rotate(-60deg) scaleX(-1)}
+  100%{transform:rotate(-15deg) scaleX(-1)}
+}
+@keyframes swingAi{
+  0%{transform:rotate(-15deg)}
+  20%{transform:rotate(-70deg)}
+  55%{transform:rotate(85deg)}
+  75%{transform:rotate(60deg)}
+  100%{transform:rotate(15deg)}
+}
+.stick-player .weapon-wrap{animation:swingPlayer .55s ease-in-out !important}
+.stick-ai .weapon-wrap{animation:swingAi .55s ease-in-out !important}
+
+/* HURT */
+@keyframes hurtPlayer{
+  0%{transform:translateX(0) rotate(0deg)}
+  15%{transform:translateX(-8px) rotate(-4deg)}
+  35%{transform:translateX(-28px) rotate(-8deg)}
+  55%{transform:translateX(-18px) rotate(-3deg)}
+  75%{transform:translateX(-24px) rotate(-6deg)}
+  100%{transform:translateX(0) rotate(0deg)}
+}
+@keyframes hurtAi{
+  0%{transform:translateX(0) rotate(0deg)}
+  15%{transform:translateX(8px) rotate(4deg)}
+  35%{transform:translateX(28px) rotate(8deg)}
+  55%{transform:translateX(18px) rotate(3deg)}
+  75%{transform:translateX(24px) rotate(6deg)}
+  100%{transform:translateX(0) rotate(0deg)}
+}
+.hurt-player{animation:hurtPlayer .55s cubic-bezier(.3,1.4,.5,1) !important}
+.hurt-ai{animation:hurtAi .55s cubic-bezier(.3,1.4,.5,1) !important}
+.hurt-flash-player{animation:hurtFlashP .4s ease-out !important}
+@keyframes hurtFlashP{
+  0%{filter:drop-shadow(0 0 0 red) brightness(1)}
+  25%{filter:drop-shadow(0 0 30px red) brightness(2.4) saturate(2)}
+  100%{filter:drop-shadow(0 0 0 red) brightness(1)}
+}
+.hurt-flash-ai{animation:hurtFlashA .4s ease-out !important}
+@keyframes hurtFlashA{
+  0%{filter:drop-shadow(0 0 0 #5aa0ff) brightness(1)}
+  25%{filter:drop-shadow(0 0 30px #5aa0ff) brightness(2.4) saturate(2)}
+  100%{filter:drop-shadow(0 0 0 #5aa0ff) brightness(1)}
+}
+
+/* DEAL DAMAGE */
+@keyframes dealPlayer{
+  0%{transform:translateX(0) scale(1)}
+  30%{transform:translateX(45px) scale(1.08)}
+  55%{transform:translateX(55px) scale(1.08)}
+  100%{transform:translateX(0) scale(1)}
+}
+.deal-player{animation:dealPlayer .55s cubic-bezier(.2,.9,.3,1) !important}
+@keyframes dealAi{
+  0%{transform:translateX(0) scale(1)}
+  30%{transform:translateX(-45px) scale(1.08)}
+  55%{transform:translateX(-55px) scale(1.08)}
+  100%{transform:translateX(0) scale(1)}
+}
+.deal-ai{animation:dealAi .55s cubic-bezier(.2,.9,.3,1) !important}
+
+.damage-popup{position:absolute;font-size:2.1rem;font-weight:900;color:#ff4444;
+  text-shadow:0 0 10px #000,0 0 25px #f00;opacity:0;pointer-events:none;z-index:40;
+  animation:floatUp 1s ease-out forwards}
+@keyframes floatUp{0%{opacity:1;transform:translate(-50%,0) scale(.6) rotate(-8deg)}
+  25%{transform:translate(-50%,-20px) scale(1.4) rotate(4deg)}
+  100%{opacity:0;transform:translate(-50%,-90px) scale(1) rotate(0)}}
+.spark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:35;
+  animation:sparkFly .55s ease-out forwards}
+@keyframes sparkFly{0%{opacity:1;transform:translate(0,0) scale(1)}
+  100%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(.2)}}
+.spark-flash{position:absolute;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#ffe484 25%,#ff9900 45%,rgba(255,120,0,0) 70%);
+  pointer-events:none;z-index:34;animation:flashPop .45s ease-out forwards}
+@keyframes flashPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}
+  30%{opacity:1;transform:translate(-50%,-50%) scale(1.5)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
+
+/* SKILL BUTTONS */
+.stats-panel{background:#1f2d33;border-radius:40px;padding:10px 12px;margin-top:6px;
+  box-shadow:inset 0 0 0 2px #3f5963,inset 0 0 10px #0d1519;display:flex;flex-direction:column;
+  gap:6px;width:100%;}
+.skill-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:nowrap}
+.skill-btn{
+  background:linear-gradient(180deg,#3e555e,#2a3d45);border:none;border-radius:18px;
+  padding:8px 4px;font-weight:700;font-size:.7rem;color:#f2e9d0;
+  box-shadow:0 5px 0 #121e22,0 5px 12px #000;cursor:pointer;
+  flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:transform .1s,box-shadow .1s,filter .15s;position:relative;overflow:hidden;
+}
+.skill-btn:hover:not(:disabled){filter:brightness(1.18);transform:translateY(-1px)}
+.skill-btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 #121e22,0 5px 12px #000}
+.skill-btn:disabled{opacity:.32;transform:translateY(3px);box-shadow:0 2px 0 #121e22;cursor:not-allowed;filter:grayscale(.6)}
+.skill-btn .sword-icon{width:34px;height:34px;display:block;filter:drop-shadow(0 0 6px currentColor);transition:transform .2s}
+.skill-btn:hover:not(:disabled) .sword-icon{transform:scale(1.12) rotate(-8deg)}
+.skill-btn .skill-name{font-size:.66rem;letter-spacing:.5px;color:#e8dfc0}
+.skill-btn .skill-meta{font-size:.56rem;color:#a8bfc8;line-height:1.1;text-align:center}
+
+/* ENEMY HAND */
+.enemy-hand{display:flex;gap:8px;justify-content:center;align-items:center;width:100%;min-height:64px;
+  background:#1f2d33;border-radius:40px;padding:10px 12px;margin-top:6px;
+  box-shadow:inset 0 0 0 2px #3f5963,inset 0 0 10px #0d1519;}
+.card-back{
+  width:52px;height:62px;border-radius:12px;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 6px, rgba(255,255,255,0.04) 6px 7px),
+    linear-gradient(145deg,#3a1e1e,#1e1010);
+  border:2px solid #6a3a3a;box-shadow:0 4px 0 #0c0606,0 6px 10px #000,inset 0 0 20px rgba(200,60,60,0.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;color:#c98a8a;text-shadow:0 0 8px #a02020;
+  transition:transform .2s;animation:cardFloat 3s ease-in-out infinite;text-align:center;
+}
+.card-back:nth-child(2){animation-delay:.4s}
+.card-back:nth-child(3){animation-delay:.8s}
+@keyframes cardFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.card-back.revealed{animation:none;background:linear-gradient(145deg,#2a3d45,#1a262c);border-color:#5b7a83;color:#f0ddb0;font-size:.7rem;font-weight:900}
+.card-back.selected-card{animation:cardPop .4s ease;border-color:#d9b650;box-shadow:0 0 20px rgba(217,182,80,0.7),0 4px 0 #0c0606}
+@keyframes cardPop{0%{transform:scale(1)}40%{transform:scale(1.2) rotate(-5deg)}100%{transform:scale(1)}}
+
+.vs-badge{font-size:1.6rem;font-weight:800;color:#d9b650;
+  text-shadow:0 4px 0 #533e0e,0 6px 10px #000,0 0 30px rgba(255,180,50,0.6);
+  align-self:center;margin-bottom:170px;z-index:2;animation:vsPulse 2.5s ease-in-out infinite}
+@keyframes vsPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+.result-area{text-align:center;margin-top:6px;min-height:44px;color:#f0ddb0;font-weight:700;
+  font-size:1.15rem;text-shadow:0 3px 0 #0c1518;padding:6px 12px;background:#1b292e;
+  border-radius:36px;box-shadow:inset 0 0 12px #0f191d}
+.clash-log{font-size:.86rem;color:#c5d6db;margin-top:5px;min-height:24px;text-align:center;padding:4px}
+.shake{animation:shake .18s ease-in-out}
+@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}
+  75%{transform:translateX(-3px)}100%{transform:translateX(0)}}
+
+.game-over-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;
+  align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(5px)}
+.game-over-box{background:linear-gradient(180deg,#2d3e44,#1e2b2f);padding:40px 60px;
+  border-radius:40px;text-align:center;box-shadow:0 20px 60px #000,0 0 80px rgba(200,100,30,0.3);
+  border:3px solid #5b7a83;animation:boxPop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes boxPop{0%{transform:scale(.5) rotate(-3deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.game-over-box h2{font-size:2.5rem;color:#f0e6c5;margin:0 0 12px;text-shadow:0 4px 0 #0b1417}
+.game-over-box p{color:#c5d6db;font-size:1.1rem;margin-bottom:24px}
+.game-over-box button{background:linear-gradient(180deg,#e8c860,#d9b650);border:none;padding:14px 40px;border-radius:30px;
+  font-size:1.2rem;font-weight:700;color:#1e2b2f;cursor:pointer;
+  box-shadow:0 6px 0 #8a6d1e,0 8px 16px #000;transition:transform .1s}
+.game-over-box button:active{transform:translateY(4px);box-shadow:0 2px 0 #8a6d1e,0 8px 16px #000}
+</style>
+</head>
+<body>
+
+<!-- ===== WEAPON SELECTION MENU ===== -->
+<div class="weapon-menu" id="weaponMenu">
+  <div class="menu-box">
+    <h2 class="menu-title">CHOOSE YOUR WEAPON</h2>
+    <p class="menu-sub">Every weapon has 3 skills. Innate + max coin power = 15 for each skill.</p>
+
+    <p class="menu-section-label">Your Weapon</p>
+    <div class="weapon-grid" id="playerWeaponGrid"></div>
+
+    <p class="menu-section-label">Opponent's Weapon</p>
+    <div class="menu-row">
+      <button class="menu-btn active-toggle" id="randomToggle">🎲 Random Opponent Weapon</button>
+    </div>
+    <div class="weapon-grid" id="aiWeaponGrid"></div>
+
+    <div class="menu-row" style="margin-top:8px">
+      <button class="menu-btn primary" id="startBtn">⚔️ START DUEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GAME ===== -->
+<div class="game-container" id="gameContainer">
+<h1><span class="tan">TAN</span> <span class="agi">AGI</span> <span class="clash">CLASHERS</span></h1>
+<div class="weapon-tag" id="weaponTag">You: <b>—</b> vs Rival: <b>—</b></div>
+<div class="arena" id="arena">
+  <!-- PLAYER -->
+  <div class="fighter left" id="fighterPlayer">
+    <div class="fighter-label">YOU</div>
+    <div class="hp-bar-wrap"><div class="hp-fill" id="playerHpFill" style="width:100%"></div><span class="hp-text" id="playerHpText">50 / 50</span></div>
+    <div class="skill-coins-panel" id="playerSkillCoins"></div>
+    <div class="stat-row">
+      <div class="power-box" id="playerPowerBox"><span class="power-box-label">POWER</span><span class="power-box-value" id="playerPowerValue">0</span></div>
+      <div class="sanity-box" id="playerSanityBox">
+        <div class="sanity-label">SANITY</div>
+        <div class="sanity-value" id="playerSanityValue">0</div>
+        <div class="sanity-chance" id="playerSanityChance">50%</div>
+      </div>
+    </div>
+    <div class="coin-row" id="playerCoinRow"></div>
+    <div class="stickman" id="stickPlayer">
+      <svg class="body-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="25" r="14" fill="#d9c8a0" stroke="#b89f6b" stroke-width="3"/>
+        <line x1="50" y1="39" x2="50" y2="85" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="55" x2="25" y2="75" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="55" x2="75" y2="75" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="85" x2="30" y2="115" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="85" x2="70" y2="115" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="43" cy="21" r="2.5" fill="#111"/><circle cx="57" cy="21" r="2.5" fill="#111"/>
+      </svg>
+      <div class="weapon-wrap" id="playerWeaponWrap"></div>
+    </div>
+    <div class="stats-panel"><div class="skill-buttons" id="playerSkills"></div></div>
+  </div>
+
+  <div class="vs-badge">VS</div>
+
+  <!-- AI -->
+  <div class="fighter right" id="fighterAi">
+    <div class="fighter-label">RIVAL</div>
+    <div class="hp-bar-wrap"><div class="hp-fill ai-fill" id="aiHpFill" style="width:100%"></div><span class="hp-text" id="aiHpText">50 / 50</span></div>
+    <div class="skill-coins-panel" id="aiSkillCoins"></div>
+    <div class="stat-row">
+      <div class="power-box" id="aiPowerBox"><span class="power-box-label">POWER</span><span class="power-box-value" id="aiPowerValue">0</span></div>
+      <div class="sanity-box" id="aiSanityBox">
+        <div class="sanity-label">SANITY</div>
+        <div class="sanity-value" id="aiSanityValue">0</div>
+        <div class="sanity-chance" id="aiSanityChance">50%</div>
+      </div>
+    </div>
+    <div class="coin-row" id="aiCoinRow"></div>
+    <div class="stickman" id="stickAi">
+      <svg class="body-svg" viewBox="0 0 100 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="25" r="14" fill="#d9c8a0" stroke="#b89f6b" stroke-width="3"/>
+        <line x1="50" y1="39" x2="50" y2="85" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="55" x2="25" y2="75" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="55" x2="75" y2="75" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="85" x2="30" y2="115" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <line x1="50" y1="85" x2="70" y2="115" stroke="#c7b08b" stroke-width="6" stroke-linecap="round"/>
+        <circle cx="43" cy="21" r="2.5" fill="#111"/><circle cx="57" cy="21" r="2.5" fill="#111"/>
+      </svg>
+      <div class="weapon-wrap" id="aiWeaponWrap"></div>
+    </div>
+    <div class="enemy-hand" id="enemyHand">
+      <div class="card-back" id="aiCard0">?</div>
+      <div class="card-back" id="aiCard1">?</div>
+      <div class="card-back" id="aiCard2">?</div>
+    </div>
+  </div>
+</div>
+<div class="result-area" id="resultMessage">⚡ Choose your skill to start the duel ⚡</div>
+<div class="clash-log" id="clashLog">Innate power + coin flips. Sanity shifts after damage.</div>
+</div>
+
+<script>
+(function(){
+  var MAX_HP = 50;
+  var MIN_SANITY = -45;
+  var MAX_SANITY = 45;
+
+  // ===== WEAPON SVG ICONS =====
+  function svgSword(c1,c2){
+    return '<svg viewBox="0 0 40 110" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="16" y="0" width="8" height="72" rx="2" fill="'+c1+'" stroke="'+c2+'" stroke-width="1.5"/>'+
+      '<polygon points="16,0 24,0 20,-10" fill="'+c2+'" stroke="'+c2+'" stroke-width="1.2"/>'+
+      '<rect x="10" y="68" width="20" height="7" rx="3" fill="#6a4a20" stroke="#3a2a10" stroke-width="1.5"/>'+
+      '<rect x="17" y="74" width="6" height="30" rx="2" fill="#b38b4a" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<circle cx="20" cy="104" r="4" fill="#b38b4a" stroke="#5c4020" stroke-width="1.2"/></svg>';
+  }
+  function svgSpear(c1,c2){
+    return '<svg viewBox="0 0 40 110" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="18" y="20" width="4" height="90" rx="2" fill="#a07840" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<polygon points="20,-8 30,22 20,18 10,22" fill="'+c1+'" stroke="'+c2+'" stroke-width="1.5"/>'+
+      '<rect x="14" y="18" width="12" height="6" rx="2" fill="#c49a52" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<circle cx="20" cy="100" r="3.5" fill="#b38b4a" stroke="#5c4020" stroke-width="1.2"/></svg>';
+  }
+  function svgAxe(c1,c2){
+    return '<svg viewBox="0 0 40 110" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="18" y="15" width="4" height="95" rx="2" fill="#a07840" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<path d="M20 12 Q38 18 38 34 Q38 48 20 48 Q10 44 8 34 Q8 18 20 12 Z" fill="'+c1+'" stroke="'+c2+'" stroke-width="1.8"/>'+
+      '<rect x="14" y="12" width="12" height="7" rx="2" fill="#c49a52" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<circle cx="20" cy="104" r="3.5" fill="#b38b4a" stroke="#5c4020" stroke-width="1.2"/></svg>';
+  }
+  function svgHammer(c1,c2){
+    return '<svg viewBox="0 0 40 110" fill="none" xmlns="http://www.w3.org/2000/svg">'+
+      '<rect x="18" y="20" width="4" height="90" rx="2" fill="#a07840" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<rect x="2" y="4" width="36" height="26" rx="4" fill="'+c1+'" stroke="'+c2+'" stroke-width="1.8"/>'+
+      '<rect x="14" y="20" width="12" height="8" rx="2" fill="#c49a52" stroke="#5c4020" stroke-width="1.2"/>'+
+      '<circle cx="20" cy="104" r="3.5" fill="#b38b4a" stroke="#5c4020" stroke-width="1.2"/></svg>';
+  }
+
+  // ===== WEAPON DEFINITIONS =====
+  // Every skill: innate + (maxCoins * powerPerCoin) = 15
+  var WEAPONS = {
+    sword: {
+      name:'SWORD', iconColors:['#e05a5a','#ff8080'],
+      iconFn: svgSword,
+      color:'#e05a5a',
+      skills: [
+        { name:'QUICK',   baseCoins:1, basePower:2,  powerPerCoin:13, coins:1 },
+        { name:'BALANCED',baseCoins:3, basePower:3,  powerPerCoin:4,  coins:3 },
+        { name:'HEAVY',   baseCoins:2, basePower:1,  powerPerCoin:7,  coins:2 }
+      ]
+    },
+    spear: {
+      name:'SPEAR', iconColors:['#5aa0e0','#80c0ff'],
+      iconFn: svgSpear,
+      color:'#5aa0e0',
+      skills: [
+        { name:'THRUST',  baseCoins:2, basePower:1,  powerPerCoin:7,  coins:2 },
+        { name:'PIERCE',  baseCoins:1, basePower:5,  powerPerCoin:10, coins:1 },
+        { name:'IMPALE',  baseCoins:3, basePower:0,  powerPerCoin:5,  coins:3 }
+      ]
+    },
+    axe: {
+      name:'AXE', iconColors:['#a05ae0','#c080ff'],
+      iconFn: svgAxe,
+      color:'#a05ae0',
+      skills: [
+        { name:'CLEAVE',  baseCoins:1, basePower:3,  powerPerCoin:12, coins:1 },
+        { name:'CHOP',    baseCoins:2, basePower:3,  powerPerCoin:6,  coins:2 },
+        { name:'REND',    baseCoins:3, basePower:2,  powerPerCoin:4,  coins:3 }
+      ]
+    },
+    hammer: {
+      name:'HAMMER', iconColors:['#e0b84a','#ffe484'],
+      iconFn: svgHammer,
+      color:'#e0b84a',
+      skills: [
+        { name:'SMASH',   baseCoins:1, basePower:7,  powerPerCoin:8,  coins:1 },
+        { name:'CRUSH',   baseCoins:2, basePower:5,  powerPerCoin:5,  coins:2 },
+        { name:'QUAKE',   baseCoins:3, basePower:0,  powerPerCoin:5,  coins:3 }
+      ]
+    }
+  };
+
+  var WEAPON_KEYS = ['sword','spear','axe','hammer'];
+
+  function makeSkillsFromWeapon(weaponKey){
+    var w = WEAPONS[weaponKey];
+    return w.skills.map(function(s){
+      return {
+        name: s.name, baseCoins: s.baseCoins, basePower: s.basePower,
+        powerPerCoin: s.powerPerCoin, coins: s.coins,
+        color: w.color, iconFn: w.iconFn
+      };
+    });
+  }
+
+  // ===== STATE =====
+  var player = { hp: MAX_HP, sanity: 0, skills: [], weaponKey:'sword' };
+  var ai = { hp: MAX_HP, sanity: 0, skills: [], weaponKey:'sword' };
+
+  var playerWeaponChoice = 'sword';
+  var aiWeaponChoice = 'sword';
+  var randomAiWeapon = true;
+
+  // ===== DOM =====
+  var weaponMenu = document.getElementById('weaponMenu');
+  var playerWeaponGrid = document.getElementById('playerWeaponGrid');
+  var aiWeaponGrid = document.getElementById('aiWeaponGrid');
+  var randomToggle = document.getElementById('randomToggle');
+  var startBtn = document.getElementById('startBtn');
+  var weaponTag = document.getElementById('weaponTag');
+
+  var playerSkillsDiv = document.getElementById('playerSkills');
+  var enemyHandEl = document.getElementById('enemyHand');
+  var resultMsg = document.getElementById('resultMessage');
+  var clashLog = document.getElementById('clashLog');
+  var arena = document.getElementById('arena');
+  var stickPlayer = document.getElementById('stickPlayer');
+  var stickAi = document.getElementById('stickAi');
+  var fighterPlayer = document.getElementById('fighterPlayer');
+  var fighterAi = document.getElementById('fighterAi');
+  var playerHpFill = document.getElementById('playerHpFill');
+  var aiHpFill = document.getElementById('aiHpFill');
+  var playerHpText = document.getElementById('playerHpText');
+  var aiHpText = document.getElementById('aiHpText');
+  var playerPowerBox = document.getElementById('playerPowerBox');
+  var playerPowerValue = document.getElementById('playerPowerValue');
+  var aiPowerBox = document.getElementById('aiPowerBox');
+  var aiPowerValue = document.getElementById('aiPowerValue');
+  var playerCoinRow = document.getElementById('playerCoinRow');
+  var aiCoinRow = document.getElementById('aiCoinRow');
+  var playerSkillCoinsPanel = document.getElementById('playerSkillCoins');
+  var aiSkillCoinsPanel = document.getElementById('aiSkillCoins');
+  var playerSanityBox = document.getElementById('playerSanityBox');
+  var playerSanityValue = document.getElementById('playerSanityValue');
+  var playerSanityChance = document.getElementById('playerSanityChance');
+  var aiSanityBox = document.getElementById('aiSanityBox');
+  var aiSanityValue = document.getElementById('aiSanityValue');
+  var aiSanityChance = document.getElementById('aiSanityChance');
+  var playerWeaponWrap = document.getElementById('playerWeaponWrap');
+  var aiWeaponWrap = document.getElementById('aiWeaponWrap');
+
+  var gameBusy=false, battleOngoing=false, gameOver=false;
+
+  // ===== WEAPON MENU =====
+  function buildWeaponOption(key, selected, isPlayer){
+    var w = WEAPONS[key];
+    var div = document.createElement('div');
+    div.className = 'weapon-option' + (selected ? ' selected' : '');
+    div.dataset.key = key;
+    div.dataset.side = isPlayer ? 'player' : 'ai';
+    var iconSvg = w.iconFn(w.iconColors[0], w.iconColors[1]);
+    var maxPows = w.skills.map(function(s){ return s.basePower + s.baseCoins*s.powerPerCoin; });
+    div.innerHTML =
+      '<div class="w-icon" style="color:'+w.color+'">'+iconSvg+'</div>'+
+      '<div class="w-name">'+w.name+'</div>'+
+      '<div class="w-stat">skills: '+maxPows.join(' / ')+'</div>';
+    div.addEventListener('click', function(){
+      if(isPlayer){
+        playerWeaponChoice = key;
+        renderWeaponMenu();
+      } else {
+        // clicking an AI weapon disables random
+        randomAiWeapon = false;
+        aiWeaponChoice = key;
+        renderWeaponMenu();
+      }
+    });
+    return div;
+  }
+
+  function renderWeaponMenu(){
+    playerWeaponGrid.innerHTML='';
+    WEAPON_KEYS.forEach(function(k){
+      playerWeaponGrid.appendChild(buildWeaponOption(k, playerWeaponChoice===k, true));
+    });
+    aiWeaponGrid.innerHTML='';
+    WEAPON_KEYS.forEach(function(k){
+      var selected = !randomAiWeapon && aiWeaponChoice===k;
+      var opt = buildWeaponOption(k, selected, false);
+      if(randomAiWeapon){
+        opt.style.opacity = '0.4';
+        opt.style.filter = 'grayscale(0.5)';
+      }
+      aiWeaponGrid.appendChild(opt);
+    });
+    if(randomAiWeapon){
+      randomToggle.classList.add('active-toggle');
+      randomToggle.textContent = '🎲 Random Opponent Weapon (ON)';
+    } else {
+      randomToggle.classList.remove('active-toggle');
+      randomToggle.textContent = '🎲 Random Opponent Weapon (OFF)';
+    }
+  }
+
+  randomToggle.addEventListener('click', function(){
+    randomAiWeapon = !randomAiWeapon;
+    renderWeaponMenu();
+  });
+
+  startBtn.addEventListener('click', function(){
+    weaponMenu.classList.add('hidden');
+    // Finalize AI weapon
+    if(randomAiWeapon){
+      aiWeaponChoice = WEAPON_KEYS[Math.floor(Math.random()*WEAPON_KEYS.length)];
+    }
+    startGame();
+  });
+
+  // ===== GAME START =====
+  function startGame(){
+    player.hp = MAX_HP; ai.hp = MAX_HP;
+    player.sanity = 0; ai.sanity = 0;
+    player.weaponKey = playerWeaponChoice;
+    ai.weaponKey = aiWeaponChoice;
+    player.skills = makeSkillsFromWeapon(playerWeaponChoice);
+    ai.skills = makeSkillsFromWeapon(aiWeaponChoice);
+
+    // Render weapon visuals
+    var pw = WEAPONS[playerWeaponChoice];
+    var aw = WEAPONS[aiWeaponChoice];
+    playerWeaponWrap.innerHTML = pw.iconFn(pw.iconColors[0], pw.iconColors[1]);
+    aiWeaponWrap.innerHTML = aw.iconFn(aw.iconColors[0], aw.iconColors[1]);
+
+    weaponTag.innerHTML = 'You: <b style="color:'+pw.color+'">'+pw.name+'</b> vs Rival: <b style="color:'+aw.color+'">'+aw.name+'</b>';
+
+    gameBusy=false; battleOngoing=false; gameOver=false;
+    playerPowerValue.textContent='0'; aiPowerValue.textContent='0';
+    playerCoinRow.innerHTML=''; aiCoinRow.innerHTML='';
+    stickPlayer.classList.remove('charge-player','stick-player','hurt-player','deal-player');
+    stickAi.classList.remove('charge-ai','stick-ai','hurt-ai','deal-ai');
+    document.querySelectorAll('.body-svg').forEach(function(b){ b.classList.remove('hurt-flash-player','hurt-flash-ai'); });
+    document.querySelectorAll('.damage-popup').forEach(function(p){p.remove();});
+    document.querySelectorAll('.spark').forEach(function(s){s.remove();});
+    document.querySelectorAll('.spark-flash').forEach(function(s){s.remove();});
+    document.querySelectorAll('.game-over-overlay').forEach(function(o){o.remove();});
+    arena.classList.remove('clash-glow');
+    resultMsg.textContent='⚡ Choose your skill to start the duel ⚡';
+    clashLog.textContent='Innate power + coin flips. Sanity shifts after damage.';
+    updateUI();
+    setPlayerButtonsDisabled(false);
+  }
+
+  // ===== SANITY =====
+  function sanityToChance(sanity){
+    var s = Math.max(MIN_SANITY, Math.min(MAX_SANITY, sanity));
+    return 0.5 + s * 0.01;
+  }
+  function sanityChancePercent(sanity){ return Math.round(sanityToChance(sanity)*100); }
+
+  function renderSanity(){
+    playerSanityValue.textContent = (player.sanity>0?'+':'')+player.sanity;
+    playerSanityChance.textContent = sanityChancePercent(player.sanity)+'% heads';
+    aiSanityValue.textContent = (ai.sanity>0?'+':'')+ai.sanity;
+    aiSanityChance.textContent = sanityChancePercent(ai.sanity)+'% heads';
+
+    playerSanityBox.className = 'sanity-box';
+    if(player.sanity >= MAX_SANITY) playerSanityBox.classList.add('max');
+    else if(player.sanity <= MIN_SANITY) playerSanityBox.classList.add('min');
+    else if(player.sanity > 0) playerSanityBox.classList.add('pos');
+    else if(player.sanity < 0) playerSanityBox.classList.add('neg');
+
+    aiSanityBox.className = 'sanity-box';
+    if(ai.sanity >= MAX_SANITY) aiSanityBox.classList.add('max');
+    else if(ai.sanity <= MIN_SANITY) aiSanityBox.classList.add('min');
+    else if(ai.sanity > 0) aiSanityBox.classList.add('pos');
+    else if(ai.sanity < 0) aiSanityBox.classList.add('neg');
+  }
+
+  function applySanityChange(who, delta){
+    if(who === 'player'){
+      player.sanity = Math.max(MIN_SANITY, Math.min(MAX_SANITY, player.sanity + delta));
+      playerSanityValue.classList.remove('bump'); void playerSanityValue.offsetWidth; playerSanityValue.classList.add('bump');
+    } else {
+      ai.sanity = Math.max(MIN_SANITY, Math.min(MAX_SANITY, ai.sanity + delta));
+      aiSanityValue.classList.remove('bump'); void aiSanityValue.offsetWidth; aiSanityValue.classList.add('bump');
+    }
+    renderSanity();
+  }
+
+  function renderHp(){
+    playerHpFill.style.width = Math.max(0,(player.hp/MAX_HP)*100)+'%';
+    aiHpFill.style.width = Math.max(0,(ai.hp/MAX_HP)*100)+'%';
+    playerHpText.textContent = Math.max(0,player.hp)+' / '+MAX_HP;
+    aiHpText.textContent = Math.max(0,ai.hp)+' / '+MAX_HP;
+  }
+
+  function renderSkillCoinPools(activeP, activeA){
+    playerSkillCoinsPanel.innerHTML='';
+    player.skills.forEach(function(skill,idx){
+      var pool=document.createElement('div');
+      pool.className='skill-coin-pool'+(skill.coins<=0?' empty':'')+(idx===activeP?' active-pool':'');
+      var coinsHtml='';
+      for(var i=0;i<skill.baseCoins;i++) coinsHtml += '<div class="pool-coin'+(i>=skill.coins?' lost':'')+'"></div>';
+      pool.innerHTML='<div class="pool-label">'+skill.name+'</div><div class="pool-coins">'+coinsHtml+'</div>';
+      playerSkillCoinsPanel.appendChild(pool);
+    });
+    aiSkillCoinsPanel.innerHTML='';
+    ai.skills.forEach(function(skill,idx){
+      var pool=document.createElement('div');
+      pool.className='skill-coin-pool'+(skill.coins<=0?' empty':'')+(idx===activeA?' active-pool':'');
+      var coinsHtml='';
+      for(var i=0;i<skill.baseCoins;i++) coinsHtml += '<div class="pool-coin'+(i>=skill.coins?' lost':'')+'"></div>';
+      pool.innerHTML='<div class="pool-label">'+skill.name+'</div><div class="pool-coins">'+coinsHtml+'</div>';
+      aiSkillCoinsPanel.appendChild(pool);
+    });
+  }
+
+  function skillIconFor(skill){
+    return skill.iconFn(skill.color, skill.color);
+  }
+
+  function renderPlayerSkills(){
+    playerSkillsDiv.innerHTML='';
+    player.skills.forEach(function(skill,idx){
+      var btn=document.createElement('button');
+      btn.className='skill-btn';
+      var dead = skill.coins<=0;
+      btn.disabled = gameBusy||battleOngoing||gameOver||dead;
+      var maxPow = skill.basePower + skill.coins * skill.powerPerCoin;
+      btn.innerHTML = '<div class="sword-icon" style="color:'+skill.color+'">'+skillIconFor(skill)+'</div>'+
+        '<span class="skill-name">'+skill.name+'</span>'+
+        '<span class="skill-meta">+'+skill.basePower+' innate · '+skill.powerPerCoin+'/coin<br>'+skill.coins+'🪙 max '+maxPow+'</span>';
+      btn.addEventListener('click',function(e){ e.preventDefault(); if(gameBusy||battleOngoing||gameOver||dead) return; startClash(idx); });
+      playerSkillsDiv.appendChild(btn);
+    });
+  }
+
+  function renderEnemyHand(){
+    enemyHandEl.innerHTML='';
+    for(var i=0;i<3;i++){
+      var card=document.createElement('div');
+      card.className='card-back'; card.id='aiCard'+i; card.textContent='?';
+      enemyHandEl.appendChild(card);
+    }
+  }
+
+  function updateUI(activeP, activeA){
+    renderHp(); renderSanity(); renderSkillCoinPools(activeP, activeA); renderPlayerSkills(); renderEnemyHand();
+  }
+
+  function setPlayerButtonsDisabled(d){
+    document.querySelectorAll('#playerSkills .skill-btn').forEach(function(b,idx){
+      b.disabled = d||gameOver||player.skills[idx].coins<=0;
+    });
+  }
+
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r,ms); }); }
+
+  function setupCoinRows(pc,ac){
+    playerCoinRow.innerHTML=''; aiCoinRow.innerHTML='';
+    for(var i=0;i<pc;i++){ var s=document.createElement('div'); s.className='coin-slot'; playerCoinRow.appendChild(s); }
+    for(var j=0;j<ac;j++){ var t=document.createElement('div'); t.className='coin-slot'; aiCoinRow.appendChild(t); }
+  }
+
+  async function flipCoin(slot, powerBox, powerValueEl, skill, currentPower, headsChance){
+    var coin=document.createElement('div');
+    coin.className='coin flipping'; coin.textContent='?';
+    slot.appendChild(coin); slot.classList.add('filled');
+    var isHeads = Math.random() < headsChance;
+    await sleep(320 + Math.random()*180);
+    coin.classList.remove('flipping'); coin.classList.add('landed');
+    if(isHeads){
+      coin.classList.add('heads'); coin.textContent='H';
+      var np = currentPower + skill.powerPerCoin;
+      powerValueEl.textContent = np;
+      powerValueEl.classList.remove('bump'); void powerValueEl.offsetWidth; powerValueEl.classList.add('bump');
+      powerBox.classList.add('active'); await sleep(160); powerBox.classList.remove('active');
+      return { isHeads:true, newPower:np };
+    } else {
+      coin.classList.add('tails'); coin.textContent='T';
+      slot.classList.add('shake'); await sleep(110); slot.classList.remove('shake');
+      return { isHeads:false, newPower:currentPower };
+    }
+  }
+
+  function createSparks(){
+    var cx = arena.offsetWidth/2;
+    var cy = arena.offsetHeight/2 + 20;
+    var flash = document.createElement('div');
+    flash.className='spark-flash';
+    flash.style.left = cx+'px'; flash.style.top = cy+'px';
+    arena.appendChild(flash);
+    setTimeout(function(){ flash.remove(); }, 550);
+    var colors=['#ffe484','#ffa500','#ff6b00','#ffffff','#ffdd55','#ff4500'];
+    for(var i=0;i<30;i++){
+      var s=document.createElement('div');
+      s.className='spark';
+      var angle = Math.random()*Math.PI*2;
+      var dist = 50 + Math.random()*150;
+      s.style.setProperty('--sx', Math.cos(angle)*dist+'px');
+      s.style.setProperty('--sy', Math.sin(angle)*dist+'px');
+      s.style.left = cx+'px'; s.style.top = cy+'px';
+      var col = colors[Math.floor(Math.random()*colors.length)];
+      s.style.background = col;
+      s.style.width = (3+Math.random()*6)+'px';
+      s.style.height = s.style.width;
+      s.style.boxShadow = '0 0 10px '+col;
+      s.style.animationDuration = (0.4+Math.random()*0.4)+'s';
+      arena.appendChild(s);
+      (function(el){ setTimeout(function(){ el.remove(); }, 900); })(s);
+    }
+  }
+
+  async function animateClashCharge(){
+    arena.classList.add('clash-glow');
+    stickPlayer.classList.add('charge-player');
+    stickAi.classList.add('charge-ai');
+    await sleep(420);
+    stickPlayer.classList.add('stick-player');
+    stickAi.classList.add('stick-ai');
+    createSparks();
+    arena.classList.add('shake');
+    await sleep(250);
+    arena.classList.remove('shake');
+    await sleep(250);
+    stickPlayer.classList.remove('stick-player');
+    stickAi.classList.remove('stick-ai');
+    stickPlayer.classList.remove('charge-player');
+    stickAi.classList.remove('charge-ai');
+    arena.classList.remove('clash-glow');
+    await sleep(280);
+  }
+
+  async function animateDealAndHurt(attackerIsPlayer, dmg){
+    var attackerStick = attackerIsPlayer ? stickPlayer : stickAi;
+    var defenderStick = attackerIsPlayer ? stickAi : stickPlayer;
+    var defenderFighter = attackerIsPlayer ? fighterAi : fighterPlayer;
+
+    attackerStick.classList.add(attackerIsPlayer ? 'deal-player' : 'deal-ai');
+    await sleep(120);
+
+    defenderStick.classList.add(attackerIsPlayer ? 'hurt-ai' : 'hurt-player');
+    var flashClass = attackerIsPlayer ? 'hurt-flash-ai' : 'hurt-flash-player';
+    var bodySvg = defenderStick.querySelector('.body-svg');
+    bodySvg.classList.add(flashClass);
+
+    var popup = document.createElement('div');
+    popup.className='damage-popup'; popup.textContent='-'+dmg;
+    popup.style.left='50%'; popup.style.top='22%';
+    defenderFighter.appendChild(popup);
+    setTimeout(function(){ popup.remove(); }, 1000);
+
+    await sleep(280);
+    attackerStick.classList.remove('deal-player','deal-ai');
+    defenderStick.classList.remove('hurt-player','hurt-ai');
+    bodySvg.classList.remove('hurt-flash-player','hurt-flash-ai');
+    await sleep(180);
+  }
+
+  function refillSkills(){
+    player.skills.forEach(function(s){ s.coins = s.baseCoins; });
+    ai.skills.forEach(function(s){ s.coins = s.baseCoins; });
+  }
+
+  function revealEnemyCard(skillIdx){
+    var card = document.getElementById('aiCard'+skillIdx);
+    if(!card) return;
+    var skill = ai.skills[skillIdx];
+    card.classList.add('revealed','selected-card');
+    card.innerHTML = '<span style="font-size:.6rem;font-weight:900;color:'+skill.color+'">'+skill.name+'</span>';
+  }
+  function hideEnemyCards(){
+    for(var i=0;i<3;i++){
+      var c = document.getElementById('aiCard'+i);
+      if(c){ c.classList.remove('revealed','selected-card'); c.innerHTML='?'; }
+    }
+  }
+
+  // ===== MAIN CLASH =====
+  async function startClash(playerSkillIdx){
+    if(gameBusy||battleOngoing||gameOver) return;
+    if(player.hp<=0||ai.hp<=0) return;
+    var playerSkill = player.skills[playerSkillIdx];
+    if(playerSkill.coins<=0){ resultMsg.textContent='❌ That skill has no coins left!'; return; }
+
+    var availableAi = [];
+    ai.skills.forEach(function(s,i){ if(s.coins>0) availableAi.push(i); });
+    if(availableAi.length===0){
+      resultMsg.textContent='🏆 Rival has no skills left with coins!';
+      gameOver=true; setPlayerButtonsDisabled(true);
+      showGameOver('🏆 VICTORY!','The rival ran out of coins in all skills!','#ffe484');
+      return;
+    }
+    var aiSkillIdx = availableAi[Math.floor(Math.random()*availableAi.length)];
+    var aiSkill = ai.skills[aiSkillIdx];
+
+    hideEnemyCards();
+    revealEnemyCard(aiSkillIdx);
+
+    gameBusy=true; battleOngoing=true; setPlayerButtonsDisabled(true);
+
+    var roundNum = 0;
+    resultMsg.textContent = '⚔️ COIN CLASH — no damage yet!';
+    clashLog.textContent = 'You: '+playerSkill.name+' (innate +'+playerSkill.basePower+', '+playerSkill.coins+' coins) vs Rival: hidden skill';
+
+    while(playerSkill.coins > 0 && aiSkill.coins > 0){
+      roundNum++;
+      var pFlip = playerSkill.coins;
+      var aFlip = aiSkill.coins;
+      var pChance = sanityToChance(player.sanity);
+      var aChance = sanityToChance(ai.sanity);
+
+      playerPowerValue.textContent = playerSkill.basePower;
+      aiPowerValue.textContent = aiSkill.basePower;
+      playerPowerBox.classList.add('active');
+      aiPowerBox.classList.add('active');
+
+      setupCoinRows(pFlip, aFlip);
+      clashLog.textContent = 'Round '+roundNum+': base '+playerSkill.basePower+' + '+pFlip+' flips ('+Math.round(pChance*100)+'% H) vs Rival '+aFlip+' flips ('+Math.round(aChance*100)+'% H)';
+
+      var playerPower=playerSkill.basePower;
+      var playerSlots = playerCoinRow.querySelectorAll('.coin-slot');
+      var playerResults=[];
+      for(var i=0;i<pFlip;i++){
+        var r = await flipCoin(playerSlots[i], playerPowerBox, playerPowerValue, playerSkill, playerPower, pChance);
+        playerResults.push(r.isHeads); playerPower = r.newPower;
+      }
+      await sleep(80);
+
+      var aiPower=aiSkill.basePower;
+      var aiSlots = aiCoinRow.querySelectorAll('.coin-slot');
+      var aiResults=[];
+      for(var k=0;k<aFlip;k++){
+        var r2 = await flipCoin(aiSlots[k], aiPowerBox, aiPowerValue, aiSkill, aiPower, aChance);
+        aiResults.push(r2.isHeads); aiPower = r2.newPower;
+      }
+
+      playerPowerBox.classList.remove('active');
+      aiPowerBox.classList.remove('active');
+
+      var pH = playerResults.filter(Boolean).length;
+      var aH = aiResults.filter(Boolean).length;
+      clashLog.textContent = 'Round '+roundNum+' — You: '+pH+'/'+pFlip+' → '+playerPower+' vs Rival: '+aH+'/'+aFlip+' → '+aiPower;
+
+      await sleep(220);
+      await animateClashCharge();
+
+      if(playerPower > aiPower){
+        aiSkill.coins--;
+        resultMsg.textContent = '⚔️ You win round '+roundNum+'! Rival loses a coin.';
+        clashLog.textContent += ' → Rival\'s skill loses 1 coin.';
+      } else if(aiPower > playerPower){
+        playerSkill.coins--;
+        resultMsg.textContent = '💥 Rival wins round '+roundNum+'! You lose a coin.';
+        clashLog.textContent += ' → Your '+playerSkill.name+' loses 1 coin.';
+      } else {
+        resultMsg.textContent = '⚖️ Round '+roundNum+' TIE! No coins lost.';
+        clashLog.textContent += ' → Tie, no coin lost.';
+      }
+
+      renderSkillCoinPools(playerSkillIdx, aiSkillIdx);
+      await sleep(300);
+      playerCoinRow.innerHTML=''; aiCoinRow.innerHTML='';
+      await sleep(120);
+    }
+
+    var playerWonAttrition = aiSkill.coins <= 0 && playerSkill.coins > 0;
+    var aiWonAttrition = playerSkill.coins <= 0 && aiSkill.coins > 0;
+
+    if(!playerWonAttrition && !aiWonAttrition){
+      resultMsg.textContent = '⚖️ Both skills exhausted! No damage.';
+      clashLog.textContent = 'Both skills ran out simultaneously.';
+      await sleep(500);
+    } else if(playerWonAttrition){
+      var remaining = playerSkill.coins;
+      resultMsg.textContent = '🏆 YOUR SKILL PREVAILS! Roll damage!';
+      clashLog.textContent = 'Rival is out! You add base +'+playerSkill.basePower+' and flip '+remaining+' coins for damage!';
+      await sleep(350);
+
+      var dmgChance = sanityToChance(player.sanity);
+      playerPowerBox.classList.add('active');
+      setupCoinRows(remaining, 0);
+      var playerSlots2 = playerCoinRow.querySelectorAll('.coin-slot');
+      var dmgHeads = 0;
+      var totalPower = playerSkill.basePower;
+      playerPowerValue.textContent = totalPower;
+      for(var d=0; d<remaining; d++){
+        var dr = await flipCoin(playerSlots2[d], playerPowerBox, playerPowerValue, playerSkill, totalPower, dmgChance);
+        if(dr.isHeads){ dmgHeads++; totalPower = dr.newPower; }
+      }
+      playerPowerBox.classList.remove('active');
+      clashLog.textContent = 'DAMAGE: base '+playerSkill.basePower+' + '+dmgHeads+'/'+remaining+' heads → '+totalPower+'!';
+      await animateClashCharge();
+      var actualDmg = Math.max(1, totalPower);
+      ai.hp = Math.max(0, ai.hp - actualDmg);
+      renderHp();
+      await animateDealAndHurt(true, actualDmg);
+      resultMsg.textContent = '💥 You deal '+actualDmg+' DAMAGE!';
+      await sleep(350);
+    } else {
+      var remaining2 = aiSkill.coins;
+      resultMsg.textContent = '💀 YOUR SKILL IS OUT! Rival rolls damage!';
+      clashLog.textContent = 'Your '+playerSkill.name+' is out! Rival adds base +'+aiSkill.basePower+' and flips '+remaining2+' coins for damage!';
+      await sleep(350);
+
+      var dmgChance2 = sanityToChance(ai.sanity);
+      aiPowerBox.classList.add('active');
+      setupCoinRows(0, remaining2);
+      var aiSlots2 = aiCoinRow.querySelectorAll('.coin-slot');
+      var aiDmgHeads = 0;
+      var aiTotalPower = aiSkill.basePower;
+      aiPowerValue.textContent = aiTotalPower;
+      for(var d2=0; d2<remaining2; d2++){
+        var dr2 = await flipCoin(aiSlots2[d2], aiPowerBox, aiPowerValue, aiSkill, aiTotalPower, dmgChance2);
+        if(dr2.isHeads){ aiDmgHeads++; aiTotalPower = dr2.newPower; }
+      }
+      aiPowerBox.classList.remove('active');
+      clashLog.textContent = 'RIVAL DAMAGE: base '+aiSkill.basePower+' + '+aiDmgHeads+'/'+remaining2+' heads → '+aiTotalPower+'!';
+      await animateClashCharge();
+      var actualDmg2 = Math.max(1, aiTotalPower);
+      player.hp = Math.max(0, player.hp - actualDmg2);
+      renderHp();
+      await animateDealAndHurt(false, actualDmg2);
+      resultMsg.textContent = '💥 Rival deals '+actualDmg2+' DAMAGE!';
+      await sleep(350);
+    }
+
+    if(playerWonAttrition){
+      applySanityChange('player', +5);
+      applySanityChange('ai', -5);
+    } else if(aiWonAttrition){
+      applySanityChange('player', -5);
+      applySanityChange('ai', +5);
+    }
+
+    playerCoinRow.innerHTML=''; aiCoinRow.innerHTML='';
+    refillSkills();
+    renderSkillCoinPools();
+    renderPlayerSkills();
+
+    if(ai.hp<=0){
+      resultMsg.textContent='🏆 VICTORY! The rival falls.';
+      clashLog.textContent='You are the champion!';
+      gameOver=true; battleOngoing=false; gameBusy=false;
+      setPlayerButtonsDisabled(true);
+      showGameOver('🏆 VICTORY!','You have defeated the rival!','#ffe484');
+      return;
+    } else if(player.hp<=0){
+      resultMsg.textContent='💀 DEFEAT... The rival stands victorious.';
+      clashLog.textContent='You have been slain.';
+      gameOver=true; battleOngoing=false; gameBusy=false;
+      setPlayerButtonsDisabled(true);
+      showGameOver('💀 DEFEAT','The rival has slain you...','#e05a5a');
+      return;
+    }
+
+    battleOngoing=false; gameBusy=false;
+    setPlayerButtonsDisabled(false);
+    resultMsg.textContent='⚡ Coins refilled! Choose your next skill ⚡';
+  }
+
+  function showGameOver(title,msg,color){
+    var overlay=document.createElement('div');
+    overlay.className='game-over-overlay';
+    overlay.innerHTML='<div class="game-over-box"><h2 style="color:'+color+'">'+title+'</h2><p>'+msg+'</p>'+
+      '<button id="replayBtn">⚔️ Duel Again</button> '+
+      '<button id="menuBtn" style="background:linear-gradient(180deg,#4a656f,#2e444d);color:#f0e6c5;margin-left:8px">🎯 New Weapons</button></div>';
+    document.body.appendChild(overlay);
+    document.getElementById('replayBtn').addEventListener('click',function(){
+      overlay.remove(); startGame();
+    });
+    document.getElementById('menuBtn').addEventListener('click',function(){
+      overlay.remove(); openWeaponMenu();
+    });
+  }
+
+  function openWeaponMenu(){
+    weaponMenu.classList.remove('hidden');
+    renderWeaponMenu();
+  }
+
+  // ===== INIT =====
+  renderWeaponMenu();
+  // Pre-populate so the game container doesn't look empty behind the menu
+  player.skills = makeSkillsFromWeapon('sword');
+  ai.skills = makeSkillsFromWeapon('sword');
+  playerWeaponWrap.innerHTML = WEAPONS.sword.iconFn('#e05a5a','#ff8080');
+  aiWeaponWrap.innerHTML = WEAPONS.sword.iconFn('#e05a5a','#ff8080');
+  updateUI();
+  setPlayerButtonsDisabled(false);
+})();
+</script>
+</body>
+</html>
